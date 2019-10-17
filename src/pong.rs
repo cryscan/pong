@@ -1,6 +1,6 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader},
-    core::transform::Transform,
+    core::{Time, Transform},
     ecs::prelude::{Component, DenseVecStorage},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
@@ -16,16 +16,38 @@ pub const BALL_VELOCITY_X: f32 = 75.0;
 pub const BALL_VELOCITY_Y: f32 = 50.0;
 pub const BALL_RADIUS: f32 = 2.0;
 
-pub struct Pong;
+#[derive(Default)]
+pub struct Pong {
+    ball_spawn_timer: Option<f32>,
+    sprite_sheet: Option<Handle<SpriteSheet>>,
+}
 
 impl SimpleState for Pong {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let world = data.world;
         init_camera(world);
 
+        self.ball_spawn_timer.replace(1.0);
+
         let sprite_sheet = load_sprite_sheet(world);
-        init_paddles(world, sprite_sheet.clone());
-        init_ball(world, sprite_sheet.clone());
+        self.sprite_sheet.replace(sprite_sheet);
+
+        init_paddles(world, self.sprite_sheet.clone().unwrap());
+    }
+
+    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+        if let Some(mut timer) = self.ball_spawn_timer.take() {
+            {
+                let time = data.world.fetch::<Time>();
+                timer -= time.delta_seconds();
+            }
+            if timer <= 0.0 {
+                init_ball(data.world, self.sprite_sheet.clone().unwrap());
+            } else {
+                self.ball_spawn_timer.replace(timer);
+            }
+        }
+        Trans::None
     }
 }
 
@@ -127,7 +149,7 @@ impl Component for Ball {
 
 fn init_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
     let mut transform = Transform::default();
-    transform.set_translation_xyz(PADDLE_WIDTH * 0.5, PADDLE_HEIGHT * 0.5, 0.0);
+    transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 0.0);
 
     let sprite_render = SpriteRender {
         sprite_sheet,
