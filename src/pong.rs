@@ -1,9 +1,10 @@
 use amethyst::{
-    assets::{AssetStorage, Handle, Loader},
+    assets::{Handle, Loader},
     core::{Time, Transform},
-    ecs::prelude::{Component, DenseVecStorage},
+    ecs::prelude::{Component, DenseVecStorage, Entity},
     prelude::*,
-    renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+    renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat},
+    ui::{Anchor, TtfFormat, UiText, UiTransform},
 };
 
 pub const ARENA_WIDTH: f32 = 100.0;
@@ -25,14 +26,15 @@ pub struct Pong {
 impl SimpleState for Pong {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let world = data.world;
-        init_camera(world);
 
         self.ball_spawn_timer.replace(1.0);
 
         let sprite_sheet = load_sprite_sheet(world);
         self.sprite_sheet.replace(sprite_sheet);
 
+        init_camera(world);
         init_paddles(world, self.sprite_sheet.clone().unwrap());
+        init_scoreboard(world);
     }
 
     fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
@@ -51,6 +53,24 @@ impl SimpleState for Pong {
     }
 }
 
+fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
+    let texture_handle = {
+        world.read_resource::<Loader>().load(
+            "texture/sprite_sheet.png",
+            ImageFormat::default(),
+            (),
+            &world.read_resource(),
+        )
+    };
+
+    world.read_resource::<Loader>().load(
+        "texture/sprite_sheet.ron",
+        SpriteSheetFormat(texture_handle),
+        (),
+        &world.read_resource(),
+    )
+}
+
 fn init_camera(world: &mut World) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(ARENA_WIDTH * 0.5, ARENA_HEIGHT * 0.5, 1.0);
@@ -60,28 +80,6 @@ fn init_camera(world: &mut World) {
         .with(Camera::standard_2d(ARENA_WIDTH, ARENA_HEIGHT))
         .with(transform)
         .build();
-}
-
-fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
-    let texture_handle = {
-        let loader = world.read_resource::<Loader>();
-        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load(
-            "texture/sprite_sheet.png",
-            ImageFormat::default(),
-            (),
-            &texture_storage,
-        )
-    };
-
-    let loader = world.read_resource::<Loader>();
-    let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
-    loader.load(
-        "texture/sprite_sheet.ron",
-        SpriteSheetFormat(texture_handle),
-        (),
-        &sprite_sheet_store,
-    )
 }
 
 #[derive(PartialEq, Eq)]
@@ -165,4 +163,56 @@ fn init_ball(world: &mut World, sprite_sheet: Handle<SpriteSheet>) {
         })
         .with(transform)
         .build();
+}
+
+#[derive(Default)]
+pub struct ScoreBoard {
+    pub score_left: i32,
+    pub score_right: i32,
+}
+
+pub struct ScoreText {
+    pub p1_score: Entity,
+    pub p2_score: Entity,
+}
+
+fn init_scoreboard(world: &mut World) {
+    let font = world.read_resource::<Loader>().load(
+        "font/square.ttf",
+        TtfFormat,
+        (),
+        &world.read_resource(),
+    );
+    let p1_transform = UiTransform::new(
+        "P1".to_string(), Anchor::TopMiddle, Anchor::TopMiddle,
+        -50., -50., 1., 200., 50.,
+    );
+    let p2_transform = UiTransform::new(
+        "P2".to_string(), Anchor::TopMiddle, Anchor::TopMiddle,
+        50., -50., 1., 200., 50.,
+    );
+
+    let p1_score = world
+        .create_entity()
+        .with(p1_transform)
+        .with(UiText::new(
+            font.clone(),
+            "0".to_string(),
+            [1., 1., 1., 1.],
+            50.,
+        ))
+        .build();
+
+    let p2_score = world
+        .create_entity()
+        .with(p2_transform)
+        .with(UiText::new(
+            font,
+            "0".to_string(),
+            [1., 1., 1., 1.],
+            50.,
+        ))
+        .build();
+
+    world.insert(ScoreText { p1_score, p2_score });
 }
