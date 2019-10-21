@@ -1,10 +1,15 @@
+use std::ops::Deref;
+
 use amethyst::{
+    assets::AssetStorage,
+    audio::{output::Output, Source},
     core::{SystemDesc, Transform},
     derive::SystemDesc,
-    ecs::prelude::{Join, ReadExpect, System, SystemData, World, Write, WriteStorage},
+    ecs::prelude::{Join, Read, ReadExpect, System, SystemData, World, Write, WriteStorage},
     ui::UiText,
 };
 
+use crate::audio::{play_score_sound, Sounds};
 use crate::pong::{ARENA_WIDTH, Ball, ScoreBoard, ScoreText};
 
 #[derive(SystemDesc)]
@@ -17,6 +22,9 @@ impl<'a> System<'a> for WinnerSystem {
         WriteStorage<'a, UiText>,
         Write<'a, ScoreBoard>,
         ReadExpect<'a, ScoreText>,
+        Read<'a, AssetStorage<Source>>,
+        ReadExpect<'a, Sounds>,
+        Option<Read<'a, Output>>,
     );
 
     fn run(&mut self, (
@@ -25,6 +33,9 @@ impl<'a> System<'a> for WinnerSystem {
         mut ui_text,
         mut scores,
         score_text,
+        storage,
+        sound,
+        audio_output,
     ): Self::SystemData) {
         for (ball, local) in (&mut balls, &mut locals).join() {
             let ball_x = local.translation().x;
@@ -46,6 +57,11 @@ impl<'a> System<'a> for WinnerSystem {
             if did_hit {
                 ball.velocity[0] = -ball.velocity[0];
                 local.set_translation_x(ARENA_WIDTH * 0.5);
+                play_score_sound(
+                    &*sound,
+                    &storage,
+                    audio_output.as_ref().map(|o| o.deref()),
+                )
             }
         }
     }

@@ -7,6 +7,8 @@ use amethyst::{
     ui::{Anchor, TtfFormat, UiText, UiTransform},
 };
 
+use crate::audio::init_audio;
+
 pub const ARENA_WIDTH: f32 = 100.0;
 pub const ARENA_HEIGHT: f32 = 100.0;
 
@@ -35,6 +37,7 @@ impl SimpleState for Pong {
         init_camera(world);
         init_paddles(world, self.sprite_sheet.clone().unwrap());
         init_scoreboard(world);
+        init_audio(world);
     }
 
     fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
@@ -54,16 +57,16 @@ impl SimpleState for Pong {
 }
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
+    let loader = world.read_resource::<Loader>();
     let texture_handle = {
-        world.read_resource::<Loader>().load(
+        loader.load(
             "texture/sprite_sheet.png",
             ImageFormat::default(),
             (),
             &world.read_resource(),
         )
     };
-
-    world.read_resource::<Loader>().load(
+    loader.load(
         "texture/sprite_sheet.ron",
         SpriteSheetFormat(texture_handle),
         (),
@@ -177,12 +180,16 @@ pub struct ScoreText {
 }
 
 fn init_scoreboard(world: &mut World) {
-    let font = world.read_resource::<Loader>().load(
-        "font/square.ttf",
-        TtfFormat,
-        (),
-        &world.read_resource(),
-    );
+    let font = {
+        let loader = world.read_resource::<Loader>();
+        loader.load(
+            "font/square.ttf",
+            TtfFormat,
+            (),
+            &world.read_resource(),
+        )
+    };
+
     let p1_transform = UiTransform::new(
         "P1".to_string(), Anchor::TopMiddle, Anchor::TopMiddle,
         -50., -50., 1., 200., 50.,
