@@ -57,7 +57,9 @@ impl<'a> System<'a> for BounceSystem {
                     paddle_y - ball.radius,
                     paddle_x + paddle.width + ball.radius,
                     paddle_y + paddle.height + ball.radius,
-                ) && paddle_ball_collide(paddle, ball) {
+                )
+                    && ((paddle.side == Side::Left && ball.velocity[0] < 0.)
+                    || (paddle.side == Side::Right && ball.velocity[0] > 0.)) {
                     ball.velocity[0] = -ball.velocity[0];
                     play_bounce_sound(
                         &*sounds,
@@ -72,9 +74,4 @@ impl<'a> System<'a> for BounceSystem {
 
 fn point_in_rect(x: f32, y: f32, left: f32, bottom: f32, right: f32, top: f32) -> bool {
     x >= left && x <= right && y <= top && y >= bottom
-}
-
-fn paddle_ball_collide(paddle: &Paddle, ball: &Ball) -> bool {
-    (paddle.side == Side::Left && ball.velocity[0] < 0.)
-        || (paddle.side == Side::Right && ball.velocity[0] > 0.)
 }
