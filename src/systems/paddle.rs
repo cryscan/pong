@@ -1,7 +1,7 @@
 use amethyst::{
-    core::{SystemDesc, Time, Transform},
+    core::{Time, Transform},
     derive::SystemDesc,
-    ecs::prelude::{Join, Read, ReadStorage, System, SystemData, World, WriteStorage},
+    ecs::prelude::{Join, Read, ReadStorage, System, SystemData, WriteStorage},
     input::{InputHandler, StringBindings},
 };
 
@@ -30,7 +30,7 @@ impl<'a> System<'a> for PaddleSystem {
                     transform.set_translation_y(
                         (transform.translation().y + scaled_amount)
                             .max(0.5 * PADDLE_HEIGHT)
-                            .min(ARENA_HEIGHT - 0.5 * PADDLE_HEIGHT)
+                            .min(ARENA_HEIGHT - 0.5 * PADDLE_HEIGHT),
                     );
                 }
             }

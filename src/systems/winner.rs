@@ -3,9 +3,9 @@ use std::ops::Deref;
 use amethyst::{
     assets::AssetStorage,
     audio::{output::Output, Source},
-    core::{SystemDesc, Transform},
+    core::Transform,
     derive::SystemDesc,
-    ecs::prelude::{Join, Read, ReadExpect, System, SystemData, World, Write, WriteStorage},
+    ecs::prelude::{Join, Read, ReadExpect, System, SystemData, Write, WriteStorage},
     ui::UiText,
 };
 
@@ -27,16 +27,19 @@ impl<'a> System<'a> for WinnerSystem {
         Option<Read<'a, Output>>,
     );
 
-    fn run(&mut self, (
-        mut balls,
-        mut locals,
-        mut ui_text,
-        mut scores,
-        score_text,
-        storage,
-        sound,
-        audio_output,
-    ): Self::SystemData) {
+    fn run(
+        &mut self,
+        (
+            mut balls,
+            mut locals,
+            mut ui_text,
+            mut scores,
+            score_text,
+            storage,
+            sound,
+            audio_output,
+        ): Self::SystemData,
+    ) {
         for (ball, local) in (&mut balls, &mut locals).join() {
             let ball_x = local.translation().x;
 
@@ -52,16 +55,14 @@ impl<'a> System<'a> for WinnerSystem {
                     text.text = scores.score_left.to_string();
                 }
                 true
-            } else { false };
+            } else {
+                false
+            };
 
             if did_hit {
                 ball.velocity[0] = -ball.velocity[0];
                 local.set_translation_x(ARENA_WIDTH * 0.5);
-                play_score_sound(
-                    &*sound,
-                    &storage,
-                    audio_output.as_ref().map(|o| o.deref()),
-                )
+                play_score_sound(&*sound, &storage, audio_output.as_ref().map(|o| o.deref()))
             }
         }
     }

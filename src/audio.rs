@@ -13,12 +13,7 @@ pub struct Sounds {
 }
 
 fn load_audio_track(loader: &Loader, world: &World, file: &str) -> SourceHandle {
-    loader.load(
-        file,
-        OggFormat,
-        (),
-        &world.read_resource(),
-    )
+    loader.load(file, OggFormat, (), &world.read_resource())
 }
 
 pub fn init_audio(world: &mut World) {

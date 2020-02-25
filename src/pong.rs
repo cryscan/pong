@@ -182,21 +182,28 @@ pub struct ScoreText {
 fn init_scoreboard(world: &mut World) {
     let font = {
         let loader = world.read_resource::<Loader>();
-        loader.load(
-            "font/square.ttf",
-            TtfFormat,
-            (),
-            &world.read_resource(),
-        )
+        loader.load("font/square.ttf", TtfFormat, (), &world.read_resource())
     };
 
     let p1_transform = UiTransform::new(
-        "P1".to_string(), Anchor::TopMiddle, Anchor::TopMiddle,
-        -50., -50., 1., 200., 50.,
+        "P1".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        -50.,
+        -50.,
+        1.,
+        200.,
+        50.,
     );
     let p2_transform = UiTransform::new(
-        "P2".to_string(), Anchor::TopMiddle, Anchor::TopMiddle,
-        50., -50., 1., 200., 50.,
+        "P2".to_string(),
+        Anchor::TopMiddle,
+        Anchor::TopMiddle,
+        50.,
+        -50.,
+        1.,
+        200.,
+        50.,
     );
 
     let p1_score = world
@@ -213,12 +220,7 @@ fn init_scoreboard(world: &mut World) {
     let p2_score = world
         .create_entity()
         .with(p2_transform)
-        .with(UiText::new(
-            font,
-            "0".to_string(),
-            [1., 1., 1., 1.],
-            50.,
-        ))
+        .with(UiText::new(font, "0".to_string(), [1., 1., 1., 1.], 50.))
         .build();
 
     world.insert(ScoreText { p1_score, p2_score });
